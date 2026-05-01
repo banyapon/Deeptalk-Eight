@@ -25,6 +25,11 @@ import { AudioRecorder } from "../../lib/audio-recorder";
 import AudioPulse from "../audio-pulse/AudioPulse";
 import "./control-tray.scss";
 
+const VIDEO_FRAME_INTERVAL_MS = 2000;
+const VIDEO_FRAME_SCALE = 0.2;
+const VIDEO_FRAME_MAX_WIDTH = 320;
+const VIDEO_FRAME_QUALITY = 0.6;
+
 export type ControlTrayProps = {
   videoRef: RefObject<HTMLVideoElement>;
   children?: ReactNode;
@@ -117,21 +122,33 @@ function ControlTray({
       const video = videoRef.current;
       const canvas = renderCanvasRef.current;
 
-      if (!video || !canvas) {
+      if (!video || !canvas || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
         return;
       }
 
       const ctx = canvas.getContext("2d")!;
-      canvas.width = video.videoWidth * 0.25;
-      canvas.height = video.videoHeight * 0.25;
+      const scaledWidth = Math.max(
+        1,
+        Math.min(Math.round(video.videoWidth * VIDEO_FRAME_SCALE), VIDEO_FRAME_MAX_WIDTH),
+      );
+      const aspectRatio = video.videoWidth > 0 ? video.videoHeight / video.videoWidth : 1;
+      const scaledHeight = Math.max(1, Math.round(scaledWidth * aspectRatio));
+
+      if (canvas.width !== scaledWidth) {
+        canvas.width = scaledWidth;
+      }
+      if (canvas.height !== scaledHeight) {
+        canvas.height = scaledHeight;
+      }
+
       if (canvas.width + canvas.height > 0) {
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        const base64 = canvas.toDataURL("image/jpeg", 1.0);
+        const base64 = canvas.toDataURL("image/jpeg", VIDEO_FRAME_QUALITY);
         const data = base64.slice(base64.indexOf(",") + 1, Infinity);
         client.sendRealtimeInput([{ mimeType: "image/jpeg", data }]);
       }
       if (connected) {
-        timeoutId = window.setTimeout(sendVideoFrame, 1000 / 0.5);
+        timeoutId = window.setTimeout(sendVideoFrame, VIDEO_FRAME_INTERVAL_MS);
       }
     }
     if (connected && activeVideoStream !== null) {
@@ -145,9 +162,14 @@ function ControlTray({
   //handler for swapping from one video-stream to the next
   const changeStreams = (next?: UseMediaStreamResult) => async () => {
     if (next) {
-      const mediaStream = await next.start();
-      setActiveVideoStream(mediaStream);
-      onVideoStreamChange(mediaStream);
+      try {
+        const mediaStream = await next.start();
+        setActiveVideoStream(mediaStream);
+        onVideoStreamChange(mediaStream);
+      } catch {
+        setActiveVideoStream(null);
+        onVideoStreamChange(null);
+      }
     } else {
       setActiveVideoStream(null);
       onVideoStreamChange(null);
@@ -210,6 +232,11 @@ function ControlTray({
         </div>
         <span className="text-indicator">Streaming</span>
       </div>
+      {supportsVideo && webcam.error && (
+        <div className="media-error" role="status">
+          {webcam.error}
+        </div>
+      )}
     </section>
   );
 }

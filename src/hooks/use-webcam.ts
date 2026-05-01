@@ -20,6 +20,7 @@ import { UseMediaStreamResult } from "./use-media-stream-mux";
 export function useWebcam(): UseMediaStreamResult {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleStreamEnded = () => {
@@ -41,12 +42,32 @@ export function useWebcam(): UseMediaStreamResult {
   }, [stream]);
 
   const start = async () => {
-    const mediaStream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-    });
-    setStream(mediaStream);
-    setIsStreaming(true);
-    return mediaStream;
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+      });
+      setStream(mediaStream);
+      setIsStreaming(true);
+      setError(null);
+      return mediaStream;
+    } catch (err) {
+      setStream(null);
+      setIsStreaming(false);
+
+      if (err instanceof DOMException) {
+        if (err.name === "NotAllowedError") {
+          setError("Camera permission was denied. Please allow camera access and try again.");
+        } else if (err.name === "NotFoundError") {
+          setError("No camera device was found.");
+        } else {
+          setError(err.message || "Unable to start the camera.");
+        }
+      } else {
+        setError("Unable to start the camera.");
+      }
+
+      throw err;
+    }
   };
 
   const stop = () => {
@@ -63,6 +84,7 @@ export function useWebcam(): UseMediaStreamResult {
     stop,
     isStreaming,
     stream,
+    error,
   };
 
   return result;

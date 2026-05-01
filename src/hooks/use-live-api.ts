@@ -32,6 +32,7 @@ export type UseLiveAPIResults = {
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
   volume: number;
+  connectionError: { code: number; reason: string } | null;
 };
 
 export function useLiveAPI({
@@ -45,10 +46,12 @@ export function useLiveAPI({
   const audioStreamerRef = useRef<AudioStreamer | null>(null);
 
   const [connected, setConnected] = useState(false);
+  const [connectionError, setConnectionError] = useState<{
+    code: number;
+    reason: string;
+  } | null>(null);
   const [config, setConfig] = useState<LiveConfig>({
-    //model: "models/gemini-2.0-flash-exp",
-    model: "models/gemini-2.5-flash-exp-native-audio-thinking-dialog",
-
+    model: "models/gemini-2.5-flash-native-audio-preview-12-2025",
   });
   const [volume, setVolume] = useState(0);
 
@@ -69,8 +72,9 @@ export function useLiveAPI({
   }, [audioStreamerRef]);
 
   useEffect(() => {
-    const onClose = () => {
+    const onClose = (event: CloseEvent) => {
       setConnected(false);
+      setConnectionError({ code: event.code, reason: event.reason });
     };
 
     const stopAudioStreamer = () => audioStreamerRef.current?.stop();
@@ -92,7 +96,7 @@ export function useLiveAPI({
   }, [client]);
 
   const connect = useCallback(async () => {
-    console.log(config);
+    setConnectionError(null);
     if (!config) {
       throw new Error("config has not been set");
     }
@@ -102,6 +106,7 @@ export function useLiveAPI({
   }, [client, setConnected, config]);
 
   const disconnect = useCallback(async () => {
+    setConnectionError(null);
     client.disconnect();
     setConnected(false);
   }, [setConnected, client]);
@@ -114,5 +119,6 @@ export function useLiveAPI({
     connect,
     disconnect,
     volume,
+    connectionError,
   };
 }

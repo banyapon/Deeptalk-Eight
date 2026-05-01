@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 import { type FunctionDeclaration, SchemaType } from "@google/generative-ai";
-import { useEffect, useRef, useState, memo } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import vegaEmbed from "vega-embed";
 import { useLiveAPIContext } from "../../contexts/LiveAPIContext";
 import { ToolCall } from "../../multimodal-live-types";
+
 interface AltairProps {
   onGeminiSpeaking?: () => void;
   onGeminiSilent?: () => void;
@@ -41,14 +42,20 @@ const declaration: FunctionDeclaration = {
 
 function AltairComponent({ onGeminiSpeaking, onGeminiSilent }: AltairProps) {
   const speakingTimeout = useRef<NodeJS.Timeout | null>(null);
+  const embedRef = useRef<HTMLDivElement>(null);
   const [jsonString, setJSONString] = useState<string>("");
   const { client, setConfig } = useLiveAPIContext();
 
   useEffect(() => {
     setConfig({
-      model: "models/gemini-2.0-flash-exp",
+      model: "models/gemini-2.5-flash-native-audio-preview-12-2025",
       generationConfig: {
         responseModalities: "audio",
+        candidateCount: 1,
+        maxOutputTokens: 192,
+        thinkingConfig: {
+          thinkingBudget: 0,
+        },
         speechConfig: {
           voiceConfig: { prebuiltVoiceConfig: { voiceName: "Leda" } },
         },
@@ -56,56 +63,49 @@ function AltairComponent({ onGeminiSpeaking, onGeminiSilent }: AltairProps) {
       systemInstruction: {
         parts: [
           {
-            text: 'ให้คุณโต้ตอบแบบสุภาพในบทบาทของผู้หญิงไทย ใช้คำลงท้ายว่า "คะ" หรือ "ค่ะ" อย่างเหมาะสม',
+            text:
+              'ตอบเป็นภาษาไทยสุภาพแบบผู้หญิงไทย ลงท้ายด้วย "ค่ะ" หรือ "คะ" ให้เหมาะสม ตอบสั้น กระชับ และเริ่มตอบทันทีโดยไม่เกริ่นยาว',
           },
         ],
       },
-      tools: [
-        // there is a free-tier quota for search
-        { googleSearch: {} },
-        { functionDeclarations: [declaration] },
-      ],
+      tools: [{ functionDeclarations: [declaration] }],
     });
   }, [setConfig]);
 
   useEffect(() => {
     const onToolCall = (toolCall: ToolCall) => {
-      console.log(`got toolcall`, toolCall);
       const fc = toolCall.functionCalls.find(
-        (fc) => fc.name === declaration.name,
+        (functionCall) => functionCall.name === declaration.name,
       );
+
       if (fc) {
-        const str = (fc.args as any).json_graph;
-        setJSONString(str);
+        const str = (fc.args as { json_graph?: string }).json_graph;
+        if (str) {
+          setJSONString(str);
+        }
       }
-      // send data for the response of your tool call
-      // in this case Im just saying it was successful
+
       if (toolCall.functionCalls.length) {
-        setTimeout(
-          () =>
-            client.sendToolResponse({
-              functionResponses: toolCall.functionCalls.map((fc) => ({
-                response: { output: { success: true } },
-                id: fc.id,
-              })),
-            }),
-          200,
-        );
+        client.sendToolResponse({
+          functionResponses: toolCall.functionCalls.map((functionCall) => ({
+            response: { output: { success: true } },
+            id: functionCall.id,
+          })),
+        });
       }
     };
+
     client.on("toolcall", onToolCall);
     return () => {
       client.off("toolcall", onToolCall);
     };
   }, [client]);
 
-  const embedRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     if (embedRef.current && jsonString) {
       vegaEmbed(embedRef.current, JSON.parse(jsonString));
     }
-  }, [embedRef, jsonString]);
+  }, [jsonString]);
 
   useEffect(() => {
     const onAudio = () => {
@@ -113,7 +113,7 @@ function AltairComponent({ onGeminiSpeaking, onGeminiSilent }: AltairProps) {
       if (speakingTimeout.current) clearTimeout(speakingTimeout.current);
       speakingTimeout.current = setTimeout(() => {
         onGeminiSilent?.();
-      }, 2000); // ปรับเวลาตามระยะ idle ที่ต้องการ
+      }, 2000);
     };
 
     client.on("audio", onAudio);
@@ -122,6 +122,7 @@ function AltairComponent({ onGeminiSpeaking, onGeminiSilent }: AltairProps) {
       if (speakingTimeout.current) clearTimeout(speakingTimeout.current);
     };
   }, [client, onGeminiSpeaking, onGeminiSilent]);
+
   return <div className="vega-embed" ref={embedRef} />;
 }
 

@@ -43,6 +43,9 @@ export type LiveConfig = {
 
 export type LiveGenerationConfig = GenerationConfig & {
   responseModalities: "text" | "audio" | "image";
+  thinkingConfig?: {
+    thinkingBudget?: number;
+  };
   speechConfig?: {
     voiceConfig?: {
       prebuiltVoiceConfig?: {

@@ -16,10 +16,38 @@
 
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+
+jest.mock('./contexts/LiveAPIContext', () => ({
+  LiveAPIProvider: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="live-api-provider">{children}</div>
+  ),
+}));
+
+jest.mock('./components/side-panel/SidePanel', () => () => (
+  <div>Mock Side Panel</div>
+));
+
+jest.mock('./components/altair/Altair', () => ({
+  Altair: () => <div>Mock Altair</div>,
+}));
+
+jest.mock('./components/control-tray/ControlTray', () => ({
+  __esModule: true,
+  default: ({ children }: { children?: React.ReactNode }) => (
+    <div>
+      <div>Mock Control Tray</div>
+      {children}
+    </div>
+  ),
+}));
+
 import App from './App';
 
-test('renders learn react link', () => {
+test('renders the desktop app shell', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+
+  expect(screen.getByTestId('live-api-provider')).toBeInTheDocument();
+  expect(screen.getByText('Mock Side Panel')).toBeInTheDocument();
+  expect(screen.getByText('Mock Altair')).toBeInTheDocument();
+  expect(screen.getByText('Mock Control Tray')).toBeInTheDocument();
 });

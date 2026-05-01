@@ -20,4 +20,5 @@ export type UseMediaStreamResult = {
   stop: () => void;
   isStreaming: boolean;
   stream: MediaStream | null;
+  error?: string | null;
 };

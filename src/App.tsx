@@ -20,7 +20,6 @@ import { LiveAPIProvider } from "./contexts/LiveAPIContext";
 import SidePanel from "./components/side-panel/SidePanel";
 import { Altair } from "./components/altair/Altair";
 import ControlTray from "./components/control-tray/ControlTray";
-import cn from "classnames";
 
 const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
 if (typeof API_KEY !== "string") {
@@ -33,24 +32,20 @@ const uri = `wss://${host}/ws/google.ai.generativelanguage.v1alpha.GenerativeSer
 function App() {
   const [avatarSrc, setAvatarSrc] = useState<string>("assets/idle.mp4");
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
-  const [currentTalkVideo, setCurrentTalkVideo] = useState<string | null>(null);
+  const [hasVideoStream, setHasVideoStream] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
 
   const handleGeminiSpeaking = () => {
     if (isSpeaking) return;
 
     const rand = Math.random() < 0.5 ? "talk-1.mp4" : "talk-2.mp4";
     const selected = `assets/${rand}`;
-    console.log("🔊 AI is speaking: ", selected);
 
-    setCurrentTalkVideo(selected);
     setAvatarSrc(selected);
     setIsSpeaking(true);
   };
 
   const handleGeminiSilent = () => {
-    console.log("🔕 AI is silent. Waiting 1 second before switching to idle...");
     setTimeout(() => {
       setIsSpeaking(false);                // หยุด loop
       setAvatarSrc("assets/idle.mp4");     // เปลี่ยนเป็น idle หลังหน่วง
@@ -102,6 +97,11 @@ function App() {
 
               {/* Video from webcam */}
               <div className="self-video-container">
+                {!hasVideoStream && (
+                  <div className="self-video-placeholder">
+                    Allow camera access to show realtime preview
+                  </div>
+                )}
                 <video
                   className="stream-video"
                   ref={videoRef}
@@ -115,7 +115,7 @@ function App() {
             <ControlTray
               videoRef={videoRef}
               supportsVideo={true}
-              onVideoStreamChange={setVideoStream}
+              onVideoStreamChange={(stream) => setHasVideoStream(Boolean(stream))}
             >
               {/* put your own buttons here */}
             </ControlTray>
@@ -127,3 +127,4 @@ function App() {
 }
 
 export default App;
+

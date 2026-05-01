@@ -16,7 +16,6 @@
 
 import { create } from "zustand";
 import { StreamingLog } from "../multimodal-live-types";
-import { mockLogs } from "../components/logger/mock-logs";
 
 interface StoreLoggerState {
   maxLogs: number;
@@ -26,7 +25,7 @@ interface StoreLoggerState {
 }
 
 export const useLoggerStore = create<StoreLoggerState>((set, get) => ({
-  maxLogs: 500,
+  maxLogs: 200,
   logs: [], //mockLogs,
   log: ({ date, type, message }: StreamingLog) => {
     set((state) => {

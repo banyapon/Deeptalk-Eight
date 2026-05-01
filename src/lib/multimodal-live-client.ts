@@ -69,6 +69,18 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
   public ws: WebSocket | null = null;
   protected config: LiveConfig | null = null;
   public url: string = "";
+  private readonly aggregatedLogWindowMs = 1000;
+  private aggregatedLogs = new Map<
+    string,
+    {
+      count: number;
+      bytes: number;
+      timer: number;
+      summary: string;
+      type: string;
+    }
+  >();
+
   public getConfig() {
     return { ...this.config };
   }
@@ -84,12 +96,74 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
   }
 
   log(type: string, message: StreamingLog["message"]) {
+    if (typeof message === "string") {
+      const aggregateKey = this.getAggregateLogKey(type, message);
+      if (aggregateKey) {
+        this.queueAggregatedLog(type, aggregateKey, message);
+        return;
+      }
+    }
+
     const log: StreamingLog = {
       date: new Date(),
       type,
       message,
     };
     this.emit("log", log);
+  }
+
+  private getAggregateLogKey(type: string, message: string) {
+    if (type === "client.realtimeInput") {
+      return `${type}:${message}`;
+    }
+
+    if (type === "server.audio") {
+      return type;
+    }
+
+    return null;
+  }
+
+  private queueAggregatedLog(type: string, key: string, message: string) {
+    const existing = this.aggregatedLogs.get(key);
+
+    if (existing) {
+      existing.count += 1;
+      existing.bytes += this.extractLoggedBytes(message);
+      return;
+    }
+
+    const entry = {
+      count: 1,
+      bytes: this.extractLoggedBytes(message),
+      timer: window.setTimeout(() => this.flushAggregatedLog(key), this.aggregatedLogWindowMs),
+      summary: message,
+      type,
+    };
+    this.aggregatedLogs.set(key, entry);
+  }
+
+  private flushAggregatedLog(key: string) {
+    const entry = this.aggregatedLogs.get(key);
+    if (!entry) {
+      return;
+    }
+
+    this.aggregatedLogs.delete(key);
+    const suffix = entry.count > 1 ? ` x${entry.count}` : "";
+    const bytes =
+      entry.bytes > 0 ? ` (${Math.round(entry.bytes / 1024)} KB total)` : "";
+
+    this.emit("log", {
+      date: new Date(),
+      type: entry.type,
+      message: `${entry.summary}${suffix}${bytes}`,
+    });
+  }
+
+  private extractLoggedBytes(message: string) {
+    const match = message.match(/\((\d+)\)/);
+    return match ? Number(match[1]) : 0;
   }
 
   connect(config: LiveConfig): Promise<boolean> {

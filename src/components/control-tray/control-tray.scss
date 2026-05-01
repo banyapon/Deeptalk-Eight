@@ -113,6 +113,7 @@
   align-items: flex-start;
   gap: 8px;
   padding-bottom: 18px;
+  flex-wrap: wrap;
 
   .disabled .action-button,
   .action-button.disabled {
@@ -147,6 +148,14 @@
       }
     }
   }
+}
+
+.media-error {
+  width: 100%;
+  text-align: center;
+  color: var(--Red-400);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .actions-nav {
