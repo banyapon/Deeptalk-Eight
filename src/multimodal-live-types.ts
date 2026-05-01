@@ -143,6 +143,7 @@ export type ToolCall = {
 
 /** log types */
 export type StreamingLog = {
+  id?: number;
   date: Date;
   type: string;
   count?: number;

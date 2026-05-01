@@ -24,9 +24,11 @@ interface StoreLoggerState {
   clearLogs: () => void;
 }
 
+let nextLogId = 0;
+
 export const useLoggerStore = create<StoreLoggerState>((set, get) => ({
   maxLogs: 200,
-  logs: [], //mockLogs,
+  logs: [],
   log: ({ date, type, message }: StreamingLog) => {
     set((state) => {
       const prevLog = state.logs.at(-1);
@@ -34,31 +36,19 @@ export const useLoggerStore = create<StoreLoggerState>((set, get) => ({
         return {
           logs: [
             ...state.logs.slice(0, -1),
-            {
-              date,
-              type,
-              message,
-              count: prevLog.count ? prevLog.count + 1 : 1,
-            } as StreamingLog,
+            { id: prevLog.id, date, type, message, count: (prevLog.count ?? 0) + 1 },
           ],
         };
       }
       return {
         logs: [
           ...state.logs.slice(-(get().maxLogs - 1)),
-          {
-            date,
-            type,
-            message,
-          } as StreamingLog,
+          { id: ++nextLogId, date, type, message },
         ],
       };
     });
   },
 
-  clearLogs: () => {
-    console.log("clear log");
-    set({ logs: [] });
-  },
+  clearLogs: () => set({ logs: [] }),
   setMaxLogs: (n: number) => set({ maxLogs: n }),
 }));

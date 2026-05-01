@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import "./App.scss";
 import { LiveAPIProvider } from "./contexts/LiveAPIContext";
 import SidePanel from "./components/side-panel/SidePanel";
@@ -32,25 +32,27 @@ const uri = `wss://${host}/ws/google.ai.generativelanguage.v1alpha.GenerativeSer
 function App() {
   const [avatarSrc, setAvatarSrc] = useState<string>("assets/idle.mp4");
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
+  const isSpeakingRef = useRef(false);
+  const silentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [hasVideoStream, setHasVideoStream] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const handleGeminiSpeaking = () => {
-    if (isSpeaking) return;
-
+  const handleGeminiSpeaking = useCallback(() => {
+    if (isSpeakingRef.current) return;
+    isSpeakingRef.current = true;
     const rand = Math.random() < 0.5 ? "talk-1.mp4" : "talk-2.mp4";
-    const selected = `assets/${rand}`;
-
-    setAvatarSrc(selected);
+    setAvatarSrc(`assets/${rand}`);
     setIsSpeaking(true);
-  };
+  }, []);
 
-  const handleGeminiSilent = () => {
-    setTimeout(() => {
-      setIsSpeaking(false);                // หยุด loop
-      setAvatarSrc("assets/idle.mp4");     // เปลี่ยนเป็น idle หลังหน่วง
+  const handleGeminiSilent = useCallback(() => {
+    if (silentTimerRef.current) clearTimeout(silentTimerRef.current);
+    silentTimerRef.current = setTimeout(() => {
+      isSpeakingRef.current = false;
+      setIsSpeaking(false);
+      setAvatarSrc("assets/idle.mp4");
     }, 1000);
-  };
+  }, []);
 
   return (
     <div className="App">

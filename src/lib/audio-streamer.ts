@@ -75,19 +75,12 @@ export class AudioStreamer {
   }
 
   addPCM16(chunk: Uint8Array) {
-    const float32Array = new Float32Array(chunk.length / 2);
-    const dataView = new DataView(chunk.buffer);
+    const sampleCount = chunk.length >> 1;
+    const float32Array = new Float32Array(sampleCount);
+    const dataView = new DataView(chunk.buffer, chunk.byteOffset, chunk.byteLength);
 
-    for (let i = 0; i < chunk.length / 2; i++) {
-      try {
-        const int16 = dataView.getInt16(i * 2, true);
-        float32Array[i] = int16 / 32768;
-      } catch (e) {
-        console.error(e);
-        // console.log(
-        //   `dataView.length: ${dataView.byteLength},  i * 2: ${i * 2}`,
-        // );
-      }
+    for (let i = 0; i < sampleCount; i++) {
+      float32Array[i] = dataView.getInt16(i * 2, true) / 32768;
     }
 
     const newBuffer = new Float32Array(

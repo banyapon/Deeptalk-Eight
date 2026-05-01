@@ -18,7 +18,7 @@ import "./logger.scss";
 
 import { Part } from "@google/generative-ai";
 import cn from "classnames";
-import { ReactNode } from "react";
+import { memo, ReactNode, useMemo } from "react";
 import { useLoggerStore } from "../../lib/store-logger";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { vs2015 as dark } from "react-syntax-highlighter/dist/esm/styles/hljs";
@@ -42,7 +42,7 @@ import {
 
 const formatTime = (d: Date) => d.toLocaleTimeString().slice(0, -3);
 
-const LogEntry = ({
+const LogEntry = memo(({
   log,
   MessageComponent,
 }: {
@@ -70,7 +70,7 @@ const LogEntry = ({
     </span>
     {log.count && <span className="count">{log.count}</span>}
   </li>
-);
+));
 
 const PlainTextMessage = ({
   message,
@@ -207,6 +207,9 @@ const CustomPlainTextLog = (msg: string) => () => (
   <PlainTextMessage message={msg} />
 );
 
+const InterruptedMessage = () => <PlainTextMessage message="interrupted" />;
+const TurnCompleteMessage = () => <PlainTextMessage message="turnComplete" />;
+
 export type LoggerFilterType = "conversations" | "tools" | "none";
 
 export type LoggerProps = {
@@ -242,10 +245,10 @@ const component = (log: StreamingLog) => {
   if (isServerContentMessage(log.message)) {
     const { serverContent } = log.message;
     if (isInterrupted(serverContent)) {
-      return CustomPlainTextLog("interrupted");
+      return InterruptedMessage;
     }
     if (isTurnComplete(serverContent)) {
-      return CustomPlainTextLog("turnComplete");
+      return TurnCompleteMessage;
     }
     if (isModelTurn(serverContent)) {
       return ModelTurnLog;
@@ -256,17 +259,19 @@ const component = (log: StreamingLog) => {
 
 export default function Logger({ filter = "none" }: LoggerProps) {
   const { logs } = useLoggerStore();
-
   const filterFn = filters[filter];
+  const filteredLogs = useMemo(() => logs.filter(filterFn), [logs, filterFn]);
 
   return (
     <div className="logger">
       <ul className="logger-list">
-        {logs.filter(filterFn).map((log, key) => {
-          return (
-            <LogEntry MessageComponent={component(log)} log={log} key={key} />
-          );
-        })}
+        {filteredLogs.map((log) => (
+          <LogEntry
+            MessageComponent={component(log)}
+            log={log}
+            key={log.id}
+          />
+        ))}
       </ul>
     </div>
   );
