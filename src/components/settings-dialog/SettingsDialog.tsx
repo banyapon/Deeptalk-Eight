@@ -100,6 +100,13 @@ export default function SettingsDialog() {
         settings
       </button>
       <dialog className="dialog" style={{ display: open ? "block" : "none" }}>
+        <button
+          className="dialog-close material-symbols-outlined"
+          aria-label="Close settings"
+          onClick={() => setOpen(false)}
+        >
+          close
+        </button>
         <div className={`dialog-container ${connected ? "disabled" : ""}`}>
           {connected && (
             <div className="connected-indicator">

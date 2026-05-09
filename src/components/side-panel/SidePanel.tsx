@@ -30,6 +30,10 @@ const filterOptions = [
   { value: "none", label: "All" },
 ];
 
+const defaultFilterOption = filterOptions.find(
+  (option) => option.value === "none"
+)!;
+
 export default function SidePanel() {
   const { connected, client } = useLiveAPIContext();
   const [open, setOpen] = useState(false);
@@ -41,7 +45,7 @@ export default function SidePanel() {
   const [selectedOption, setSelectedOption] = useState<{
     value: string;
     label: string;
-  } | null>(null);
+  }>(defaultFilterOption);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   //scroll the log to the bottom when new logs come in
@@ -76,7 +80,7 @@ export default function SidePanel() {
   return (
     <div className={`side-panel ${open ? "open" : ""}`}>
       <header className="top">
-        <h2>Console</h2>
+        <h2>Properties</h2>
         {open ? (
           <button className="opener" onClick={() => setOpen(false)}>
             <RiSidebarFoldLine color="#b4b8bb" />
@@ -109,10 +113,10 @@ export default function SidePanel() {
                   : undefined,
             }),
           }}
-          defaultValue={selectedOption}
+          value={selectedOption}
           options={filterOptions}
           onChange={(e) => {
-            setSelectedOption(e);
+            setSelectedOption(e || defaultFilterOption);
           }}
         />
         <div className={cn("streaming-indicator", { connected })}>

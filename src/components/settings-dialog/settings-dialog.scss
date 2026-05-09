@@ -70,11 +70,32 @@
     padding: 0;
     margin: 0;
     position: fixed;
-    top: -400px;
-    right: 0;
-    width: 696px;
-    height: 593px;
-    transform: translate(-25%, -50%);
+    top: 5%;
+    left: 50%;
+    width: min(696px, calc(100vw - 48px));
+    height: min(593px, calc(100vh - 120px));
+    transform: translate(-50%, -50%);
+    z-index: 20;
+  }
+
+  .dialog-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--Neutral-20);
+    color: var(--Neutral-80);
+    cursor: pointer;
+    z-index: 1;
+
+    &:hover {
+      background: var(--Neutral-30);
+    }
   }
 
   .dialog-container {
