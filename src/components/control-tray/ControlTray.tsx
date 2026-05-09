@@ -32,6 +32,7 @@ export type ControlTrayProps = {
   supportsVideo: boolean;
   onVideoStreamChange?: (stream: MediaStream | null) => void;
   enableEditingSettings?: boolean;
+  onRemoveApiKey?: () => void;
 };
 
 type MediaStreamButtonProps = {
@@ -64,6 +65,7 @@ function ControlTray({
   onVideoStreamChange = () => {},
   supportsVideo,
   enableEditingSettings,
+  onRemoveApiKey,
 }: ControlTrayProps) {
   const videoStreams = [useWebcam(), useScreenCapture()];
   const [activeVideoStream, setActiveVideoStream] =
@@ -213,7 +215,11 @@ function ControlTray({
         </div>
         <span className="text-indicator">Streaming</span>
       </div>
-      {enableEditingSettings ? <SettingsDialog /> : ""}
+      {enableEditingSettings ? (
+        <SettingsDialog onRemoveApiKey={onRemoveApiKey} />
+      ) : (
+        ""
+      )}
     </section>
   );
 }

@@ -15,9 +15,13 @@ type FunctionDeclarationsTool = Tool & {
   functionDeclarations: FunctionDeclaration[];
 };
 
-export default function SettingsDialog() {
+type SettingsDialogProps = {
+  onRemoveApiKey?: () => void;
+};
+
+export default function SettingsDialog({ onRemoveApiKey }: SettingsDialogProps) {
   const [open, setOpen] = useState(false);
-  const { config, setConfig, connected } = useLiveAPIContext();
+  const { config, setConfig, connected, disconnect } = useLiveAPIContext();
   const functionDeclarations: FunctionDeclaration[] = useMemo(() => {
     if (!Array.isArray(config.tools)) {
       return [];
@@ -91,6 +95,11 @@ export default function SettingsDialog() {
     [config, setConfig]
   );
 
+  const removeApiKey = useCallback(async () => {
+    await disconnect();
+    onRemoveApiKey?.();
+  }, [disconnect, onRemoveApiKey]);
+
   return (
     <div className="settings-dialog">
       <button
@@ -107,51 +116,63 @@ export default function SettingsDialog() {
         >
           close
         </button>
-        <div className={`dialog-container ${connected ? "disabled" : ""}`}>
-          {connected && (
-            <div className="connected-indicator">
-              <p>
-                These settings can only be applied before connecting and will
-                override other settings.
-              </p>
+        <div className="dialog-container">
+          <div className={connected ? "disabled" : ""}>
+            {connected && (
+              <div className="connected-indicator">
+                <p>
+                  These settings can only be applied before connecting and will
+                  override other settings.
+                </p>
+              </div>
+            )}
+            <div className="mode-selectors">
+              <ResponseModalitySelector />
+              <VoiceSelector />
             </div>
-          )}
-          <div className="mode-selectors">
-            <ResponseModalitySelector />
-            <VoiceSelector />
+
+            <h3>System Instructions</h3>
+            <textarea
+              className="system"
+              onChange={updateConfig}
+              value={systemInstruction}
+            />
+            <h4>Function declarations</h4>
+            <div className="function-declarations">
+              <div className="fd-rows">
+                {functionDeclarations.map((fd, fdKey) => (
+                  <div className="fd-row" key={`function-${fdKey}`}>
+                    <span className="fd-row-name">{fd.name}</span>
+                    <span className="fd-row-args">
+                      {Object.keys(fd.parameters?.properties || {}).map(
+                        (item, k) => (
+                          <span key={k}>{item}</span>
+                        )
+                      )}
+                    </span>
+                    <input
+                      key={`fd-${fd.description}`}
+                      className="fd-row-description"
+                      type="text"
+                      defaultValue={fd.description}
+                      onBlur={(e) =>
+                        updateFunctionDescription(fd.name!, e.target.value)
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <h3>System Instructions</h3>
-          <textarea
-            className="system"
-            onChange={updateConfig}
-            value={systemInstruction}
-          />
-          <h4>Function declarations</h4>
-          <div className="function-declarations">
-            <div className="fd-rows">
-              {functionDeclarations.map((fd, fdKey) => (
-                <div className="fd-row" key={`function-${fdKey}`}>
-                  <span className="fd-row-name">{fd.name}</span>
-                  <span className="fd-row-args">
-                    {Object.keys(fd.parameters?.properties || {}).map(
-                      (item, k) => (
-                        <span key={k}>{item}</span>
-                      )
-                    )}
-                  </span>
-                  <input
-                    key={`fd-${fd.description}`}
-                    className="fd-row-description"
-                    type="text"
-                    defaultValue={fd.description}
-                    onBlur={(e) =>
-                      updateFunctionDescription(fd.name!, e.target.value)
-                    }
-                  />
-                </div>
-              ))}
+          <div className="api-key-settings">
+            <div>
+              <h3>API Key</h3>
+              <p>Stored on this device. The key is hidden and never shown here.</p>
             </div>
+            <button type="button" onClick={removeApiKey}>
+              Remove Key
+            </button>
           </div>
         </div>
       </dialog>

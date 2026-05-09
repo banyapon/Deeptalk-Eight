@@ -116,6 +116,42 @@
     padding: 8px 0;
   }
 
+  .api-key-settings {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 28px;
+    padding-top: 18px;
+    border-top: 1px solid var(--Neutral-20);
+
+    h3,
+    p {
+      margin: 0;
+    }
+
+    p {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--Neutral-60);
+    }
+
+    button {
+      min-width: 120px;
+      height: 40px;
+      border-radius: 8px;
+      background: var(--Red-700);
+      color: white;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+
+      &:hover {
+        background: var(--Red-600);
+      }
+    }
+  }
+
   textarea.system {
     border-radius: 12px;
     background-color: var(--Neutral-15);
