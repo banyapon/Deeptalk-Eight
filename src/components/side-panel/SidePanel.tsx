@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import "./react-select.scss";
 import cn from "classnames";
 import { useEffect, useRef, useState } from "react";
 import { RiSidebarFoldLine, RiSidebarUnfoldLine } from "react-icons/ri";
@@ -26,7 +27,7 @@ import "./side-panel.scss";
 const filterOptions = [
   { value: "conversations", label: "Conversations" },
   { value: "tools", label: "Tool Use" },
-  { value: "none", label: "All" }, // "All" ถูกตั้งเป็นค่า default
+  { value: "none", label: "All" },
 ];
 
 export default function SidePanel() {
@@ -40,7 +41,7 @@ export default function SidePanel() {
   const [selectedOption, setSelectedOption] = useState<{
     value: string;
     label: string;
-  }>({ value: "none", label: "All" }); // Default เป็น "All"
+  } | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   //scroll the log to the bottom when new logs come in
@@ -111,10 +112,7 @@ export default function SidePanel() {
           defaultValue={selectedOption}
           options={filterOptions}
           onChange={(e) => {
-            if (e) {
-              // ถ้า e ไม่เป็น null ให้ตั้งค่า
-              setSelectedOption(e);
-            }
+            setSelectedOption(e);
           }}
         />
         <div className={cn("streaming-indicator", { connected })}>

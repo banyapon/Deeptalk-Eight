@@ -14,110 +14,81 @@
  * limitations under the License.
  */
 
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import "./App.scss";
-import { LiveAPIProvider } from "./contexts/LiveAPIContext";
+import {
+  LiveAPIProvider,
+  useLiveAPIContext,
+} from "./contexts/LiveAPIContext";
 import SidePanel from "./components/side-panel/SidePanel";
 import { Altair } from "./components/altair/Altair";
 import ControlTray from "./components/control-tray/ControlTray";
+import cn from "classnames";
+import { LiveClientOptions } from "./types";
 
 const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
 if (typeof API_KEY !== "string") {
   throw new Error("set REACT_APP_GEMINI_API_KEY in .env");
 }
 
-const host = "generativelanguage.googleapis.com";
-const uri = `wss://${host}/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent`;
+const apiOptions: LiveClientOptions = {
+  apiKey: API_KEY,
+};
+
+function TalkingAvatar() {
+  const { speaking } = useLiveAPIContext();
+
+  return (
+    <div
+      className="avatar-stage"
+      style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/assets/bot.png)` }}
+      aria-label="assistant avatar"
+    >
+      <video
+        key={speaking ? "talk" : "idle"}
+        className="avatar-video"
+        src={speaking ? "/assets/talk.mp4" : "/assets/idle.mp4"}
+        autoPlay
+        loop
+        muted
+        playsInline
+      />
+    </div>
+  );
+}
 
 function App() {
-  const [avatarSrc, setAvatarSrc] = useState<string>("assets/idle.mp4");
-  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
-  const isSpeakingRef = useRef(false);
-  const silentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [hasVideoStream, setHasVideoStream] = useState<boolean>(false);
+  // this video reference is used for displaying the active stream, whether that is the webcam or screen capture
+  // feel free to style as you see fit
   const videoRef = useRef<HTMLVideoElement>(null);
-
-  const handleGeminiSpeaking = useCallback(() => {
-    if (isSpeakingRef.current) return;
-    isSpeakingRef.current = true;
-    const rand = Math.random() < 0.5 ? "talk-1.mp4" : "talk-2.mp4";
-    setAvatarSrc(`assets/${rand}`);
-    setIsSpeaking(true);
-  }, []);
-
-  const handleGeminiSilent = useCallback(() => {
-    if (silentTimerRef.current) clearTimeout(silentTimerRef.current);
-    silentTimerRef.current = setTimeout(() => {
-      isSpeakingRef.current = false;
-      setIsSpeaking(false);
-      setAvatarSrc("assets/idle.mp4");
-    }, 1000);
-  }, []);
+  // either the screen capture, the video or null, if null we hide it
+  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
 
   return (
     <div className="App">
-      <LiveAPIProvider url={uri} apiKey={API_KEY}>
+      <LiveAPIProvider options={apiOptions}>
         <div className="streaming-console">
           <SidePanel />
           <main>
             <div className="main-app-area">
-              {/*<img src="assets/logo.png" alt="Logo" className="logo" />*/}
               {/* APP goes here */}
-              <Altair
-                onGeminiSpeaking={handleGeminiSpeaking}
-                onGeminiSilent={handleGeminiSilent}
+              <TalkingAvatar />
+              <Altair />
+              <video
+                className={cn("stream", {
+                  hidden: !videoRef.current || !videoStream,
+                })}
+                ref={videoRef}
+                autoPlay
+                playsInline
               />
-              {/* Avatar */}
-              <div
-                className="avatar-container"
-                style={{
-                  backgroundImage: 'url("/assets/nurse.png")',
-                  backgroundSize: 'contain',       // ✅ เปลี่ยนเป็น contain
-                  backgroundPosition: 'center',
-                  backgroundRepeat: 'no-repeat',
-                  width: '100%',
-                  height: '100%',
-                  overflow: 'hidden'
-                }}
-              >
-                <video
-                  key={avatarSrc}
-                  className="avatar-video"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain'
-                  }}
-                  autoPlay
-                  playsInline
-                  muted
-                  loop={isSpeaking || avatarSrc.includes("idle")}
-                  src={avatarSrc}
-                />
-              </div>
-
-
-              {/* Video from webcam */}
-              <div className="self-video-container">
-                {!hasVideoStream && (
-                  <div className="self-video-placeholder">
-                    Allow camera access to show realtime preview
-                  </div>
-                )}
-                <video
-                  className="stream-video"
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                />
-              </div>
             </div>
 
             <ControlTray
               videoRef={videoRef}
               supportsVideo={true}
-              onVideoStreamChange={(stream) => setHasVideoStream(Boolean(stream))}
+              onVideoStreamChange={setVideoStream}
+              enableEditingSettings={true}
             >
               {/* put your own buttons here */}
             </ControlTray>
@@ -129,4 +100,3 @@ function App() {
 }
 
 export default App;
-

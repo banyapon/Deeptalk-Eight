@@ -5,14 +5,12 @@
   background: var(--Neutral-20);
   color: var(--Neutral-60);
   font-size: 1.25rem;
-  line-height: 1.75rem;
+  line-height: 1;
   text-transform: lowercase;
-  cursor: pointer;
-  animation: opacity-pulse 3s ease-in infinite;
   transition: all 0.2s ease-in-out;
-  width: 48px;
-  height: 48px;
-  border-radius: 18px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0);
   user-select: none;
   cursor: pointer;
@@ -37,11 +35,11 @@
   }
 
   &.connected {
-    background: #570f0f00;
-    color: #ff0000;
+    background: var(--Blue-800);
+    color: var(--Blue-500);
 
     &:hover {
-      border: 3px solid #ff0000;
+      border: 1px solid var(--Blue-500);
     }
   }
 }
@@ -97,9 +95,14 @@
     outline: 2px solid var(--Neutral-80);
   }
 
+  &.connected {
+    background-color: #8a4dff;
+    color: #fff;
+  }
+
   &:not(.connected) {
-    background-color: #9300ff;
-    color: #ffffff;
+    background-color: var(--Neutral-20);
+    color: var(--Neutral-90);
   }
 }
 
@@ -110,17 +113,9 @@
   transform: translate(-50%, 0);
   display: inline-flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   padding-bottom: 18px;
-  flex-wrap: wrap;
-
-  .disabled .action-button,
-  .action-button.disabled {
-    background: rgba(0, 0, 0, 0);
-    border: 1px solid var(--Neutral-30, #404547);
-    color: var(--Neutral-30);
-  }
 
   .connection-container {
     display: flex;
@@ -131,14 +126,14 @@
 
     .connection-button-container {
       border-radius: 27px;
-      border: 1px solid var(--Neutral-30);
-      background: var(--Neutral-5);
+      border: none;
+      background: transparent;
       padding: 10px;
     }
 
     .text-indicator {
       font-size: 11px;
-      color: var(--Blue-500);
+      color: #8a4dff;
       user-select: none;
     }
 
@@ -150,31 +145,23 @@
   }
 }
 
-.media-error {
-  width: 100%;
-  text-align: center;
-  color: var(--Red-400);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
 .actions-nav {
-  background: var(--Neutral-5);
-  border: 1px solid var(--Neutral-30);
-  border-radius: 27px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
   display: inline-flex;
   gap: 12px;
   align-items: center;
-  overflow: clip;
-  padding: 10px;
-
+  overflow: visible;
+  padding: 0;
   transition: all 0.6s ease-in;
 
-  &>* {
+  & > * {
     display: flex;
     align-items: center;
-    flex-direction: column;
-    gap: 1rem;
+    justify-content: center;
+    flex-direction: row;
+    gap: 0;
   }
 }
 

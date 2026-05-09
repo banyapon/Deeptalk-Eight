@@ -15,7 +15,8 @@
  */
 
 import { create } from "zustand";
-import { StreamingLog } from "../multimodal-live-types";
+import { StreamingLog } from "../types";
+import { mockLogs } from "../components/logger/mock-logs";
 
 interface StoreLoggerState {
   maxLogs: number;
@@ -24,11 +25,9 @@ interface StoreLoggerState {
   clearLogs: () => void;
 }
 
-let nextLogId = 0;
-
 export const useLoggerStore = create<StoreLoggerState>((set, get) => ({
-  maxLogs: 200,
-  logs: [],
+  maxLogs: 100,
+  logs: [], //mockLogs,
   log: ({ date, type, message }: StreamingLog) => {
     set((state) => {
       const prevLog = state.logs.at(-1);
@@ -36,19 +35,31 @@ export const useLoggerStore = create<StoreLoggerState>((set, get) => ({
         return {
           logs: [
             ...state.logs.slice(0, -1),
-            { id: prevLog.id, date, type, message, count: (prevLog.count ?? 0) + 1 },
+            {
+              date,
+              type,
+              message,
+              count: prevLog.count ? prevLog.count + 1 : 1,
+            } as StreamingLog,
           ],
         };
       }
       return {
         logs: [
           ...state.logs.slice(-(get().maxLogs - 1)),
-          { id: ++nextLogId, date, type, message },
+          {
+            date,
+            type,
+            message,
+          } as StreamingLog,
         ],
       };
     });
   },
 
-  clearLogs: () => set({ logs: [] }),
+  clearLogs: () => {
+    console.log("clear log");
+    set({ logs: [] });
+  },
   setMaxLogs: (n: number) => set({ maxLogs: n }),
 }));

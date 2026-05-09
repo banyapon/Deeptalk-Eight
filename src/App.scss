@@ -43,6 +43,7 @@
   --Green-500: #0d9c53;
   --Green-700: #025022;
 
+  --Blue-400: #80c1ff;
   --Blue-500: #1f94ff;
   --Blue-800: #0f3557;
 
@@ -54,71 +55,8 @@
 
 body {
   font-family: "Space Mono", monospace;
-  background: var(--Neutral-30);
+  background: #000;
 }
-
-/* MyStyle */
-.main-app-area {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-  background-color: #0c0b10; // หรือสีที่คุณใช้
-  overflow: hidden;
-}
-
-/* Avatar video - Centered */
-.avatar-container {
-  position: absolute;
-  top: 45%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-
-
-.avatar-video {
-  height: 90vh;
-  object-fit: contain;
-
-  
-}
-
-/* Floating Self Video */
-.self-video-container {
-  position: absolute;
-  bottom: 100px; // ปรับให้ไม่ชิด control tray
-  right: 40px;
-  width: 300px;
-  min-height: 170px;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 0 10px rgba(0,0,0,0.5);
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.stream-video {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-  display: block;
-}
-
-.self-video-placeholder {
-  min-height: 170px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  text-align: center;
-  color: var(--Neutral-80);
-  font-size: 0.85rem;
-}
-
-/* MyStyle */
 
 .material-symbols-outlined {
   &.filled {
@@ -174,10 +112,11 @@ body {
   flex-direction: column;
 }
 
-@media (prefers-reduced-motion: no-preference) {}
+@media (prefers-reduced-motion: no-preference) {
+}
 
 .streaming-console {
-  background: var(--Neutral-5);
+  background: var(--Neutral-15);
   color: var(--gray-300);
   display: flex;
   height: 100vh;
@@ -192,7 +131,7 @@ body {
   .disabled {
     pointer-events: none;
 
-    >* {
+    > * {
       pointer-events: none;
     }
   }
@@ -209,54 +148,14 @@ body {
     overflow: hidden;
   }
 
-  /*.main-app-area {
+  .main-app-area {
     display: flex;
     flex: 1;
     align-items: center;
     justify-content: center;
-  }*/
-
-  .main-app-area {
-    position: relative;
     width: 100%;
-    height: 100vh;
-    /* เต็มความสูงของหน้าจอ */
-    overflow: hidden;
-  }
-
-  .logo {
-    position: fixed;
-    top: 2%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 10%;
-    /* กว้าง 40% */
-    z-index: 10;
-    /* อยู่ด้านหน้าสุด */
-  }
-
-  @media only screen and (max-width: 768px) {
-    .logo {
-      position: fixed;
-      top: 2%;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 50%;
-      /* กว้าง 40% */
-      z-index: 10;
-      /* อยู่ด้านหน้าสุด */
-    }
-
-    .stream {
-      position: absolute;
-      bottom: 20%;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 80%;
-      z-index: 5;
-      border-radius: 20px;
-      border: 3px solid #454545;
-    }
+    min-height: 0;
+    position: relative;
   }
 
   .function-call {
@@ -268,20 +167,35 @@ body {
   }
 }
 
+.avatar-stage {
+  width: min(72vmin, calc(100vw - 2rem), calc(100vh - 9rem));
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background-color: #000;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.avatar-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.vega-embed {
+  position: absolute;
+  inset: 1rem;
+  pointer-events: none;
+}
+
 /* video player */
-/*.stream {
+.stream {
   flex-grow: 1;
   max-width: 90%;
   border-radius: 32px;
   max-height: fit-content;
-}*/
-
-.stream {
-  position: absolute;
-  bottom: 20%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40%;
-  z-index: 5;
-  border-radius: 20px;
 }

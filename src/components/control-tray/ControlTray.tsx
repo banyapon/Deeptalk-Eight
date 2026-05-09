@@ -24,17 +24,14 @@ import { useWebcam } from "../../hooks/use-webcam";
 import { AudioRecorder } from "../../lib/audio-recorder";
 import AudioPulse from "../audio-pulse/AudioPulse";
 import "./control-tray.scss";
-
-const VIDEO_FRAME_INTERVAL_MS = 2000;
-const VIDEO_FRAME_SCALE = 0.2;
-const VIDEO_FRAME_MAX_WIDTH = 320;
-const VIDEO_FRAME_QUALITY = 0.6;
+import SettingsDialog from "../settings-dialog/SettingsDialog";
 
 export type ControlTrayProps = {
   videoRef: RefObject<HTMLVideoElement>;
   children?: ReactNode;
   supportsVideo: boolean;
   onVideoStreamChange?: (stream: MediaStream | null) => void;
+  enableEditingSettings?: boolean;
 };
 
 type MediaStreamButtonProps = {
@@ -58,7 +55,7 @@ const MediaStreamButton = memo(
       <button className="action-button" onClick={start}>
         <span className="material-symbols-outlined">{offIcon}</span>
       </button>
-    ),
+    )
 );
 
 function ControlTray({
@@ -66,6 +63,7 @@ function ControlTray({
   children,
   onVideoStreamChange = () => {},
   supportsVideo,
+  enableEditingSettings,
 }: ControlTrayProps) {
   const videoStreams = [useWebcam(), useScreenCapture()];
   const [activeVideoStream, setActiveVideoStream] =
@@ -88,7 +86,7 @@ function ControlTray({
   useEffect(() => {
     document.documentElement.style.setProperty(
       "--volume",
-      `${Math.max(5, Math.min(inVolume * 200, 8))}px`,
+      `${Math.max(5, Math.min(inVolume * 200, 8))}px`
     );
   }, [inVolume]);
 
@@ -122,33 +120,21 @@ function ControlTray({
       const video = videoRef.current;
       const canvas = renderCanvasRef.current;
 
-      if (!video || !canvas || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+      if (!video || !canvas) {
         return;
       }
 
       const ctx = canvas.getContext("2d")!;
-      const scaledWidth = Math.max(
-        1,
-        Math.min(Math.round(video.videoWidth * VIDEO_FRAME_SCALE), VIDEO_FRAME_MAX_WIDTH),
-      );
-      const aspectRatio = video.videoWidth > 0 ? video.videoHeight / video.videoWidth : 1;
-      const scaledHeight = Math.max(1, Math.round(scaledWidth * aspectRatio));
-
-      if (canvas.width !== scaledWidth) {
-        canvas.width = scaledWidth;
-      }
-      if (canvas.height !== scaledHeight) {
-        canvas.height = scaledHeight;
-      }
-
+      canvas.width = video.videoWidth * 0.25;
+      canvas.height = video.videoHeight * 0.25;
       if (canvas.width + canvas.height > 0) {
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        const base64 = canvas.toDataURL("image/jpeg", VIDEO_FRAME_QUALITY);
+        const base64 = canvas.toDataURL("image/jpeg", 1.0);
         const data = base64.slice(base64.indexOf(",") + 1, Infinity);
         client.sendRealtimeInput([{ mimeType: "image/jpeg", data }]);
       }
       if (connected) {
-        timeoutId = window.setTimeout(sendVideoFrame, VIDEO_FRAME_INTERVAL_MS);
+        timeoutId = window.setTimeout(sendVideoFrame, 1000 / 0.5);
       }
     }
     if (connected && activeVideoStream !== null) {
@@ -162,14 +148,9 @@ function ControlTray({
   //handler for swapping from one video-stream to the next
   const changeStreams = (next?: UseMediaStreamResult) => async () => {
     if (next) {
-      try {
-        const mediaStream = await next.start();
-        setActiveVideoStream(mediaStream);
-        onVideoStreamChange(mediaStream);
-      } catch {
-        setActiveVideoStream(null);
-        onVideoStreamChange(null);
-      }
+      const mediaStream = await next.start();
+      setActiveVideoStream(mediaStream);
+      onVideoStreamChange(mediaStream);
     } else {
       setActiveVideoStream(null);
       onVideoStreamChange(null);
@@ -232,11 +213,7 @@ function ControlTray({
         </div>
         <span className="text-indicator">Streaming</span>
       </div>
-      {supportsVideo && webcam.error && (
-        <div className="media-error" role="status">
-          {webcam.error}
-        </div>
-      )}
+      {enableEditingSettings ? <SettingsDialog /> : ""}
     </section>
   );
 }
